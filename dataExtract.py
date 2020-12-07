@@ -7,8 +7,10 @@ import pymongo
 # TODO: Change endpoint to archive, figure out how to stop @'s being included
 def auth(dates):
     premium_args = load_credentials(filename="credentials.yaml", yaml_key='search_tweets_api_dev', env_overwrite=False)
-    queryString = 'Drake lang:en'
-    rule = gen_rule_payload(queryString, results_per_call=100)
+    # Change the below string to the candidate you're looking for info on. Don't remove the lang:en otherwise you'll
+    # get results in any language
+    queryString = 'Biden lang:en'
+    rule = gen_rule_payload(queryString, results_per_call=100, from_date=dates[0], to_date=dates[1])
     print(rule)
     tweets = collect_results(rule, max_results=100, result_stream_args=premium_args)
     [print(tweet.all_text) for tweet in tweets]
@@ -25,6 +27,7 @@ def main():
 def time():
     startTime = datetime(2020, 6, 7).timestamp()
     endTime = datetime(2020, 11, 6).timestamp()
+    # change the 20 at the end to the number of requests you wish to make. (Max 100 requests altogether)
     randomList = numpy.random.randint(int(startTime), int(endTime), 20)
     randomDates = []
     for i in randomList:
