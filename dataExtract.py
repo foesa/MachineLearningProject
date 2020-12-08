@@ -3,6 +3,8 @@ from searchtweets import collect_results, load_credentials, gen_rule_payload
 import numpy
 import pymongo
 
+CONNECTION_STRING = "mongodb+srv://foesa:Random12@cluster0.sdvcb.mongodb.net/TweetDB?retryWrites=true&w=majority"
+
 
 # TODO: Change endpoint to archive, figure out how to stop @'s being included
 def auth(dates):
@@ -18,20 +20,21 @@ def auth(dates):
 
 
 def main():
-    dateList = time()
-    iterate = 0
-    for i in dateList:
-        tweets, query = auth(i)
-        mongo_uploader(tweets, query)
-        print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
-        iterate = iterate+1
+    # dateList = time()
+    # iterate = 0
+    # for i in dateList:
+    #     tweets, query = auth(i)
+    #     mongo_uploader(tweets, query)
+    #     print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
+    #     iterate = iterate + 1
+    get_dataset()
 
 
 def time():
     startTime = datetime(2020, 6, 7).timestamp()
     endTime = datetime(2020, 11, 6).timestamp()
     # change the 20 at the end to the number of requests you wish to make. (Max 100 requests altogether)
-    randomList = numpy.random.randint(int(startTime), int(endTime), 20)
+    randomList = numpy.random.randint(int(startTime), int(endTime), 5)
     randomDates = []
     for i in randomList:
         date = datetime.fromtimestamp(i)
@@ -42,8 +45,7 @@ def time():
 
 
 def mongo_uploader(tweets, query, dates=None):
-    connnectionString = "mongodb+srv://foesa:Random12@cluster0.sdvcb.mongodb.net/TweetDB?retryWrites=true&w=majority"
-    client = pymongo.MongoClient(connnectionString)
+    client = pymongo.MongoClient(CONNECTION_STRING)
     db = client.get_database('TweetDB')
     records = db.TweetsData
     for tweet in tweets:
@@ -59,6 +61,15 @@ def mongo_uploader(tweets, query, dates=None):
     # if dates is not None:
     #     for date in dates:
     #         records.count_documents({})
+
+
+def get_dataset():
+    client = pymongo.MongoClient(CONNECTION_STRING)
+    db = client.get_database('TweetDB')
+    records = db.TweetsData
+    tweets = records.find({})
+    for i in range(len(tweets)):
+        print(tweets[i])
 
 
 if __name__ == '__main__':
