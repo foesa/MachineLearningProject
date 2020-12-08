@@ -9,7 +9,7 @@ def auth(dates):
     premium_args = load_credentials(filename="credentials.yaml", yaml_key='search_tweets_api_dev', env_overwrite=False)
     # Change the below string to the candidate you're looking for info on. Don't remove the lang:en otherwise you'll
     # get results in any language
-    queryString = 'Biden lang:en'
+    queryString = 'Donald Trump lang:en'
     rule = gen_rule_payload(queryString, results_per_call=100, from_date=dates[0], to_date=dates[1])
     print(rule)
     tweets = collect_results(rule, max_results=100, result_stream_args=premium_args)
@@ -19,9 +19,12 @@ def auth(dates):
 
 def main():
     dateList = time()
+    iterate = 0
     for i in dateList:
         tweets, query = auth(i)
         mongo_uploader(tweets, query)
+        print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
+        iterate = iterate+1
 
 
 def time():
