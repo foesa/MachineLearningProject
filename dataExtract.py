@@ -1,3 +1,6 @@
+import json
+
+from bson.json_util import dumps
 from datetime import datetime, timedelta
 from searchtweets import collect_results, load_credentials, gen_rule_payload
 import numpy
@@ -67,9 +70,23 @@ def get_dataset():
     client = pymongo.MongoClient(CONNECTION_STRING)
     db = client.get_database('TweetDB')
     records = db.TweetsData
-    tweets = records.find({})
-    for i in range(len(tweets)):
-        print(tweets[i])
+    skip_records = 3000 # Change this to the amount of records to skip
+    retrieve_records = 3000 # Change this to the amount of records to retrieve
+    tweets = records.find().skip(skip_records).limit(retrieve_records)
+    for i in tweets:
+        print(dumps(i))
+        print(i['_id'])
+        sentiment = input('Positive(P), Negative(N) or Neutral(O): ').lower()
+        if sentiment == 'p':
+            print('Positive')
+            records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Positive'}})
+        elif sentiment == 'n':
+            print('Negative')
+            records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Negative'}})
+        elif sentiment == 'o':
+            print('Neutral')
+            records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Neutral'}})
+
 
 
 if __name__ == '__main__':
