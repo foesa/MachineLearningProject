@@ -83,6 +83,9 @@ def get_dataset():
             elif sentiment == 'n':
                 print('Negative')
                 records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Negative'}})
+            elif sentiment == 'x':
+                print('Will be removed later')
+                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Remove'}})
             elif sentiment == 'o':
                 print('Neutral')
                 records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Neutral'}})
