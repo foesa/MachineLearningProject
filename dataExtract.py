@@ -93,6 +93,8 @@ def get_dataset():
                     print("Not a valid input option")
             result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
             print(sentiment)
+        if progressCount % 10 == 0: #Retweets aren't automatically updated locally. Refresh every 10 tweets as hacky fix
+            tweets = records.find().skip(skip_records).limit(retrieve_records)
 
 
 if __name__ == '__main__':
