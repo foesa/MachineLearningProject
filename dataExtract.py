@@ -66,31 +66,33 @@ def mongo_uploader(tweets, query, dates=None):
 
 
 def get_dataset():
+    options = {
+        'p': 'Positive',
+        'n': 'Negative',
+        'x': 'Remove',
+        'o': 'Neutral'
+    }
     client = pymongo.MongoClient(CONNECTION_STRING)
     db = client.get_database('TweetDB')
     records = db.TweetsData
     skip_records = 0  # Change this to the amount of records to skip
     retrieve_records = 3000  # Change this to the amount of records to retrieve
     tweets = records.find().skip(skip_records).limit(retrieve_records)
-    progressCount = 0
-    for i in tweets:
+    for progressCount, i in enumerate(tweets):
         print(i) # Removing dumps means emojis will display
         print(i['_id'])
-        print(f"Progress: {progressCount/30}%") #TODO: 30 Should not be hardcoded
-        if 'sentiment' not in i or i['sentiment'] == '':
-            sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
-            if sentiment == 'p':
-                sentiment = 'Positive'
-            elif sentiment == 'n':
-                sentiment = 'Negative'
-            elif sentiment == 'x':
-                sentiment = 'Remove'
-            elif sentiment == 'o':
-                sentiment = 'Neutral'
-            if sentiment != '':
-                result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
-                print(sentiment)
-        progressCount += 1
+        print(f"Progress: {(progressCount/retrieve_records)*100}%")
+        if 'sentiment' not in i or i['sentiment'] not in options.values():
+            validInput = False
+            while(not validInput):
+                sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
+                if sentiment in options:
+                    sentiment = options[sentiment]
+                    validInput = True
+                else:
+                    print("Not a valid input option")
+            result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
+            print(sentiment)
 
 
 if __name__ == '__main__':
