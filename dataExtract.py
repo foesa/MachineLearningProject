@@ -69,26 +69,28 @@ def get_dataset():
     client = pymongo.MongoClient(CONNECTION_STRING)
     db = client.get_database('TweetDB')
     records = db.TweetsData
-    skip_records = 3000  # Change this to the amount of records to skip
+    skip_records = 0  # Change this to the amount of records to skip
     retrieve_records = 3000  # Change this to the amount of records to retrieve
     tweets = records.find().skip(skip_records).limit(retrieve_records)
+    progressCount = 0
     for i in tweets:
-        print(dumps(i))
+        print(i) # Removing dumps means emojis will display
         print(i['_id'])
-        if 'sentiment' not in i:
+        print(f"Progress: {progressCount/30}%") #TODO: 30 Should not be hardcoded
+        if 'sentiment' not in i or i['sentiment'] == '':
             sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
             if sentiment == 'p':
-                print('Positive')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Positive'}})
+                sentiment = 'Positive'
             elif sentiment == 'n':
-                print('Negative')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Negative'}})
+                sentiment = 'Negative'
             elif sentiment == 'x':
-                print('Will be removed later')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Remove'}})
+                sentiment = 'Remove'
             elif sentiment == 'o':
-                print('Neutral')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Neutral'}})
+                sentiment = 'Neutral'
+            if sentiment != '':
+                result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
+                print(sentiment)
+        progressCount += 1
 
 
 if __name__ == '__main__':
