@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from searchtweets import collect_results, load_credentials, gen_rule_payload
 import numpy
 import pymongo
+import math
 
 CONNECTION_STRING = "mongodb+srv://foesa:Random12@cluster0.sdvcb.mongodb.net/TweetDB?retryWrites=true&w=majority"
 
@@ -77,25 +78,25 @@ def get_dataset():
     records = db.TweetsData
     skip_records = 0  # Change this to the amount of records to skip
     retrieve_records = 3000  # Change this to the amount of records to retrieve
-    tweets = records.find().skip(skip_records).limit(retrieve_records)
-    for progressCount, i in enumerate(tweets):
-        print(i) # Removing dumps means emojis will display
-        print(i['_id'])
-        print(f"Progress: {(progressCount/retrieve_records)*100}%")
-        if 'sentiment' not in i or i['sentiment'] not in options.values():
-            validInput = False
-            while(not validInput):
-                sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
-                if sentiment in options:
-                    sentiment = options[sentiment]
-                    validInput = True
-                else:
-                    print("Not a valid input option")
-            result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
-            print(sentiment)
-        if progressCount % 10 == 0: #Retweets aren't automatically updated locally. Refresh every 10 tweets as hacky fix
-            tweets = records.find().skip(skip_records).limit(retrieve_records)
-
-
+    update_interval = 10 # Updates the retweets already filled
+    
+    num_of_chunks = math.ceil(retrieve_records/update_interval)
+    for chunk in range(num_of_chunks):
+        tweets = records.find().skip(skip_records+(chunk*update_interval)).limit(update_interval)
+        for progressCount, i in enumerate(tweets):
+            print(i) # Removing dumps means emojis will display
+            print(i['_id'])
+            print(f"Progress: {(chunk/num_of_chunks + ((1/num_of_chunks)*(progressCount/update_interval)))*100}%")
+            if 'sentiment' not in i or i['sentiment'] not in options.values():
+                validInput = False
+                while(not validInput):
+                    sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
+                    if sentiment in options:
+                        sentiment = options[sentiment]
+                        validInput = True
+                    else:
+                        print("Not a valid input option")
+                result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
+                print(sentiment)
 if __name__ == '__main__':
     main()
