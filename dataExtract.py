@@ -69,26 +69,44 @@ def get_dataset():
     client = pymongo.MongoClient(CONNECTION_STRING)
     db = client.get_database('TweetDB')
     records = db.TweetsData
+    hash_text = {}
     skip_records = 3000  # Change this to the amount of records to skip
     retrieve_records = 3000  # Change this to the amount of records to retrieve
     tweets = records.find().skip(skip_records).limit(retrieve_records)
+    sent_val = ""
+    count = 0
     for i in tweets:
         print(dumps(i))
         print(i['_id'])
+
+        if i['text'] in hash_text:
+            records.update_one({"_id": i['_id']}, {"$set": {"sentiment": hash_text[i['text']]}})
+            print(hash_text[i['text']])
+
         if 'sentiment' not in i:
+            count = count +1
+            print(count)
             sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
             if sentiment == 'p':
                 print('Positive')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Positive'}})
+                sent_val = 'Positive'
             elif sentiment == 'n':
                 print('Negative')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Negative'}})
+                sent_val = 'Negative'
             elif sentiment == 'x':
                 print('Will be removed later')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Remove'}})
+                sent_val = 'Remove'
             elif sentiment == 'o':
                 print('Neutral')
-                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": 'Neutral'}})
+                sent_val = 'Neutral'
+
+            if sent_val is not "":
+                records.update_one({"_id": i['_id']}, {"$set": {"sentiment": sent_val}})
+                hash_text[i['text']] = sent_val
+
+        else:
+            hash_text[i['text']] = i['sentiment']
+
 
 
 if __name__ == '__main__':
