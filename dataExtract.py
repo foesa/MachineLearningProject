@@ -63,7 +63,32 @@ def mongo_uploader(tweets, query, dates=None):
     # if dates is not None:
     #     for date in dates:
     #         records.count_documents({})
-
+    
+def mongo_downloader():
+    """
+    Purpose:
+        o Downloads files from Pymongo
+        o Saves them in .txt file format
+    """
+    CONNECTION_STRING = "mongodb+srv://foesa:Random12@cluster0.sdvcb.mongodb.net/TweetDB?retryWrites=true&w=majority"
+    client = pymongo.MongoClient(CONNECTION_STRING)
+    db = client.get_database('TweetDB')
+    records = db.TweetsData
+    tweets = records.find({})
+    #length = tweets.count() 
+    total_tweets=[]
+    for i in tweets:
+        #print(i)
+        total_tweets.append(i)
+    
+    maxn=len(total_tweets)
+    folder="project_data.txt" #Set to where you want to save file
+    f=open(folder,'w',encoding='utf8')
+    for i in range(0,maxn,1):
+        #print(i,total_tweets[i])
+        x=str(total_tweets[i])+'\n'
+        f.write(x)
+    f.close()
 
 def get_dataset():
     client = pymongo.MongoClient(CONNECTION_STRING)
