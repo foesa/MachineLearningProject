@@ -73,8 +73,6 @@ def get_dataset():
     retrieve_records = 3000  # Change this to the amount of records to retrieve
     tweets = records.find().skip(skip_records).limit(retrieve_records)
     for i in tweets:
-        print(dumps(i))
-        print(i['_id'])
         if 'sentiment' not in i:
             sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
             if sentiment == 'p':
