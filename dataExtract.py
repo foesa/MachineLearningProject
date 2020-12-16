@@ -30,6 +30,7 @@ def main():
     #     print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
     #     iterate = iterate + 1
     get_dataset()
+    #clear_tweets()
 
 
 def time():
@@ -77,7 +78,7 @@ def get_dataset():
     db = client.get_database('TweetDB')
     records = db.TweetsData
     skip_records = 0  # Change this to the amount of records to skip
-    retrieve_records = 3000  # Change this to the amount of records to retrieve
+    retrieve_records = 9000  # Change this to the amount of records to retrieve
     update_interval = 10 # Updates the retweets already filled
     
     num_of_chunks = math.ceil(retrieve_records/update_interval)
@@ -98,5 +99,17 @@ def get_dataset():
                         print("Not a valid input option")
                 result = records.update_many({'text':i['text']}, {"$set": {"sentiment": sentiment}})
                 print(sentiment)
+
+def clear_tweets():
+    client = pymongo.MongoClient(CONNECTION_STRING)
+    db = client.get_database('TweetDB')
+    records = db.TweetsData
+    skip_records = 1200  # Change this to the amount of records to skip
+    retrieve_records = 1800 # Change this to the amount of records to retrieve
+    tweets = records.find().skip(skip_records).limit(retrieve_records)
+    for tweet in tweets:
+        records.update_one({"_id": tweet['_id']},{ "$unset" : { "sentiment" : ""}} )
+
+
 if __name__ == '__main__':
     main()
