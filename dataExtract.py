@@ -106,7 +106,7 @@ def get_dataset():
             records.update_one({"_id": i['_id']}, {"$set": {"sentiment": hash_text[i['text']]}})
             print(hash_text[i['text']])
 
-        if 'sentiment' not in i:
+        elif 'sentiment' not in i:
             sentiment = input('Positive(P), Negative(N), Neutral(O) or Remove(X): ').lower()
             if sentiment == 'p':
                 print('Positive')
