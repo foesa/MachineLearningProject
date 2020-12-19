@@ -1,3 +1,17 @@
+"""
+Author: Efeosa Eguavoen
+
+Date Created: 16/12/2020
+
+Function:
+This script:
+1: Generates random dates to get tweets from
+2: Getst the tweets
+3: Stores into a MongoDB Database hosted online
+
+Each function has a docsting about its function
+"""
+
 from bson.json_util import dumps
 from datetime import datetime, timedelta
 from searchtweets import collect_results, load_credentials, gen_rule_payload
@@ -20,13 +34,13 @@ def auth(dates):
 
 
 def main():
-    # dateList = time()
-    # iterate = 0
-    # for i in dateList:
-    #     tweets, query = auth(i)
-    #     mongo_uploader(tweets, query)
-    #     print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
-    #     iterate = iterate + 1
+    dateList = time()
+    iterate = 0
+    for i in dateList:
+        tweets, query = auth(i)
+        mongo_uploader(tweets, query)
+        print('Getting next tweets for new time, iteration ', iterate, '\n\n\n\n')
+        iterate = iterate + 1
     get_dataset()
 
 
@@ -57,12 +71,12 @@ def mongo_uploader(tweets, query, dates=None):
         records.insert_one(sampleTweet)
     print(records.count_documents({}))
 
-
     # TODO Need to figure out how to prevent duplicate dates. Not a huge problem but still
     # if dates is not None:
     #     for date in dates:
     #         records.count_documents({})
-    
+
+
 def mongo_downloader():
     """
     Purpose:
@@ -74,20 +88,21 @@ def mongo_downloader():
     db = client.get_database('TweetDB')
     records = db.TweetsData
     tweets = records.find({})
-    #length = tweets.count() 
-    total_tweets=[]
+    # length = tweets.count()
+    total_tweets = []
     for i in tweets:
-        #print(i)
+        # print(i)
         total_tweets.append(i)
-    
-    maxn=len(total_tweets)
-    folder="project_data.txt" #Set to where you want to save file
-    f=open(folder,'w',encoding='utf8')
-    for i in range(0,maxn,1):
-        #print(i,total_tweets[i])
-        x=str(total_tweets[i])+'\n'
+
+    maxn = len(total_tweets)
+    folder = "project_data.txt"  # Set to where you want to save file
+    f = open(folder, 'w', encoding='utf8')
+    for i in range(0, maxn, 1):
+        # print(i,total_tweets[i])
+        x = str(total_tweets[i]) + '\n'
         f.write(x)
     f.close()
+
 
 def get_dataset():
     client = pymongo.MongoClient(CONNECTION_STRING)
@@ -127,7 +142,6 @@ def get_dataset():
 
         else:
             hash_text[i['text']] = i['sentiment']
-
 
 
 if __name__ == '__main__':

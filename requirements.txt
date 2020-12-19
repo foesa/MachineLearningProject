@@ -1,3 +1,5 @@
+gensim
+tensorflow
 pymongo~=3.11.2
 numpy~=1.19.4
 searchtweets~=1.7.6

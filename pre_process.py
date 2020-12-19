@@ -1,6 +1,5 @@
 import pymongo
 import preprocessor as prepro
-import nltk
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
