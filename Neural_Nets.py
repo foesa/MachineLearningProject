@@ -4,20 +4,17 @@
 3: Use the word vectors in CNN and RNN
 4: Get Results
 """
-from tensorflow.python.keras.layers import Embedding
+from tensorflow.python.keras.layers import LSTM
 
 from SVC_Classifier import get_dataset
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score
-import pandas as pd
 from gensim import models
 import numpy as np
-from tensorflow import keras
 from keras_preprocessing.text import Tokenizer
 from keras_preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Dense, Dropout, Reshape, Flatten, concatenate, Input, Conv1D, GlobalMaxPooling1D, \
     Embedding
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, Sequential
 import matplotlib.pyplot as plt
 
 
@@ -103,10 +100,7 @@ def get_word2vec_embeddings(vectors, clean_comments, generate_missing=False):
 
 
 def ConvNet(embeddings, max_sequence_length, num_words, embedding_dim, labels_index):
-    embedding_layer = Embedding(num_words,
-                                embedding_dim,
-                                weights=[embeddings],
-                                input_length=max_sequence_length,
+    embedding_layer = Embedding(num_words, embedding_dim, weights=[embeddings], input_length=max_sequence_length,
                                 trainable=False)
 
     sequence_input = Input(shape=(max_sequence_length,), dtype='int32')
@@ -134,8 +128,15 @@ def ConvNet(embeddings, max_sequence_length, num_words, embedding_dim, labels_in
     return model
 
 
-def RNN():
-    return
+def RNN(embeddings, max_sequence_length, num_words, embedding_dim, labels_index):
+    model = Sequential()
+    model.add(Embedding(num_words, embedding_dim, weights=[embeddings], input_length=max_sequence_length,
+                        trainable=False))
+    model.add(LSTM(196, dropout=0.2, recurrent_dropout=0.2))
+    model.add(Dense(labels_index, activation='softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    model.summary()
+    return model
 
 
 def main():
@@ -165,8 +166,10 @@ def main():
     y_test = test_data[label_names].values
     x_train = train_cnn_data
     x_test = test_cnn_data
-    model = ConvNet(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
-                    len(list(label_names)))
+    # model = ConvNet(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
+    # len(list(label_names)))
+    model = RNN(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
+                len(list(label_names)))
     history = model.fit(x_train, y_train, epochs=10, batch_size=34, validation_data=(x_test, y_test))
     plot_history(history)
 
