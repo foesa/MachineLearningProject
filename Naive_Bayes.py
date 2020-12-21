@@ -162,22 +162,24 @@ def pre_process_1(candidates):
     for i in data:
         start=i.find(text)
         end=i.find(date)
+        i=i.lower()
+
         #Making sure tweet doesn'tinclude Both candiates
         if "Biden" in candidates:
-            if "Biden lang:en" in i and "Trump" not in i:
-                    if "'sentiment': 'Negative'" in i:
+            if "biden lang:en" in i and "trump" not in i:
+                    if "'sentiment': 'negative'" in i:
                         total_negative.append(i[start+7:end-3])
-                    if "'sentiment': 'Positive'" in i:
+                    if "'sentiment': 'positive'" in i:
                         total_positive.append(i[start+7:end-3])
-                    if "'sentiment': 'Neutral'" in i:
+                    if "'sentiment': 'neutral'" in i:
                         total_neutral.append(i[start+7:end-3]) 
         if "Trump" in candidates:
-            if "Trump lang:en" in i and "Biden" not in i:
-                    if "'sentiment': 'Negative'" in i:
+            if "trump lang:en" in i and "biden" not in i:
+                    if "'sentiment': 'negative'" in i:
                         total_negative.append(i[start+7:end-3])
-                    if "'sentiment': 'Positive'" in i:
+                    if "'sentiment': 'positive'" in i:
                         total_positive.append(i[start+7:end-3])
-                    if "'sentiment': 'Neutral'" in i:
+                    if "'sentiment': 'neutral'" in i:
                         total_neutral.append(i[start+7:end-3]) 
                     
     positive_tokens=[]
