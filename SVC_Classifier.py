@@ -80,8 +80,8 @@ def svm(X, y):
     clf.fit(X_train, y_train)
     predict = clf.predict(X_test)
     print('Confusion Matrix: ', confusion_matrix(y_test, predict, labels=labels))
-    print('F1 Score: ', f1_score(y_test, predict, labels=labels, average='micro'))
-    print('Precision Score: ', precision_score(y_test, predict, labels=labels, average='micro'))
+    print('F1 Score: ', f1_score(y_test, predict, labels=labels, average='macro'))
+    print('Precision Score: ', precision_score(y_test, predict, labels=labels, average='macro'))
     print('Accuracy Score: ', accuracy_score(y_test, predict))
     print('Recall: ',recall_score(y_test, predict, labels=labels,average='macro'))
     
