@@ -21,6 +21,7 @@ Modules:
     o pre_process2 - Preprocessing to allow a model to be trained
     o cross_val - Using K-fold cross validation to evaluate data
     o evaluation - Returns f scores, precision and recall
+    o evaluation2 - returns  precision and recall for cross validation
     o naive_bayes_model - Brings all modules together, trains model
 
 """
@@ -235,22 +236,63 @@ def evaluation(test_data,classifier):
         print ('neu F-score:', neu_fscore)    
     except:
         pass
+def evaluation2(test_data,classifier):
+    
+    refsets = collections.defaultdict(set)
+    testsets = collections.defaultdict(set)
+     
+    for i, (feats, label) in enumerate(test_data):
+        refsets[label].add(i)
+        observed = classifier.classify(feats)
+        testsets[observed].add(i)
+    
+    pos_precision=nltk.precision(refsets['Positive'], testsets['Positive'])
+    pos_recall=nltk.recall(refsets['Positive'], testsets['Positive'])
 
+    neg_precision=nltk.precision(refsets['Negative'], testsets['Negative'])
+    neg_recall=nltk.recall(refsets['Negative'], testsets['Negative'])
+    precision=(pos_precision+neg_precision)/2
+    recall=(pos_recall+neg_recall)/2
+    try: #Try loop added for neutrals
+        neu_precision=nltk.precision(refsets['Neutral'], testsets['Neutral'])
+        neu_recall=nltk.recall(refsets['Neutral'], testsets['Neutral'])
+        precision=(pos_precision+neg_precision+neu_precision)/3
+        recall=(pos_recall+neg_recall+neu_recall)/3
+    except:
+        pass
+    return precision,recall
+    
+    
 def cross_val(test_data,train_data):
     dataset=test_data+train_data
     k_folds = 5
     subset_size = int(len(dataset)/k_folds)
     accuracy_list=[]
+    precision_list=[]
+    recall_list=[]
     for i in range(k_folds):
         testing = dataset[i*subset_size:][:subset_size]
         training = dataset[:i*subset_size] + dataset[(i+1)*subset_size:]
     
         classifier = NaiveBayesClassifier.train(training)
         accuracy=classify.accuracy(classifier, testing)
-        accuracy_list.append(accuracy)      
+        print(accuracy)
+        #nltk.classify.precision is broken currently
+        #Need to calculate pos, neg and neu and then manually calculate precision        
+        precision,recall=evaluation2(testing, classifier)
+        precision_list.append(np.round(precision,3))
+        recall_list.append(np.round(recall,3))
+        
     accuracy=np.round(np.mean(accuracy_list),3)
     std=np.round(np.std(accuracy_list),3)
-    print('accuracy = '+str(accuracy)+'+/-'+str(std))
+    precision=(np.round(np.mean(precision_list),3),
+               np.round(np.std(precision_list),3))
+    recall=(np.round(np.mean(recall_list),3),
+            np.round(np.std(recall_list),3))
+    
+    print('Accuracy = '+str(accuracy)+'+/-'+str(std))
+    print('Precision = '+str(precision))
+    print('Recall = '+str(recall))
     
 def naive_bayes_model(candidates,neutral):
     pos, neg=twitter_samp()
