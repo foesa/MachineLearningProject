@@ -252,21 +252,21 @@ def cross_val(test_data,train_data):
     
 def naive_bayes_model(candidates,neutral):
     pos, neg=twitter_samp()
-    print('########## - Baseline Model - ############')
+    print('########## - General Tweets - ############')
     neu=[]
     train_data,test_data2=pre_process2(pos,neg,neu)
     classifier = NaiveBayesClassifier.train(train_data)
 
     
     pos,neg,neu=pre_process_1(candidates)
-    
     if neutral == 'no':
-        neu=[] #Use empty list to remove neutrals
+        neu=[] #Use empty list to remove neutrals    
     train_data,test_data=pre_process2(pos,neg,neu)
-    evaluation(test_data2,classifier)
+
+    evaluation(test_data,classifier)
     cross_val(train_data,test_data2)
     
-    print('######### - Naive Bayes Model - ##############')
+    print('######### - Dataset Tweets - ##############')
     classifier = NaiveBayesClassifier.train(train_data) 
     evaluation(test_data,classifier)  
     cross_val(train_data,test_data)   
