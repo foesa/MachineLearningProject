@@ -120,7 +120,7 @@ def cross_val(k,model,X,y):
     
     return accuracy_end, std ,recall, precision
 
-def plot_cross_val(X,y):
+def plot_accuracy(X,y):
     """
     Purpose:
         Plots the accuracy and standard deviation for different gamma, C
@@ -161,7 +161,7 @@ def main():
     # hyper_pick(X, y)
     svm(X, y)
     cross_val(5,SVC(kernel='rbf', gamma=1, C=100),X,y)
-    #plot_cross_val(X,y)
+    #plot_accuracy(X,y)
     return
 
 
