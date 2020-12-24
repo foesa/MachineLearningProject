@@ -170,7 +170,7 @@ def main():
     # len(list(label_names)))
     model = RNN(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
                 len(list(label_names)))
-    history = model.fit(x_train, y_train, epochs=10, batch_size=34, validation_data=(x_test, y_test))
+    history = model.fit(x_train, y_train, epochs=10, batch_size=64, validation_data=(x_test, y_test))
     plot_history(history)
 
 

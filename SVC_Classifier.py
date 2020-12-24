@@ -16,8 +16,11 @@ import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, plot_confusion_matrix, \
+    roc_curve, auc, classification_report
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def get_dataset():
@@ -54,7 +57,7 @@ def hyper_pick(X, y):
     :param y:Sentiment values of the tweets
     :return: Outputs a graph of data
     """
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=101)
     param_grid = [{'C': [0.01, 0.1, 1, 10, 100], 'gamma': [10, 1, 0.1, 0.01, 0.001],
                    'kernel': ['rbf', 'poly', 'sigmoid']}, {'kernel': ['linear'], 'C': [0.01, 0.1, 1, 10, 100],
                                                            'gamma': [10, 1, 0.1, 0.01, 0.001]}]
@@ -79,6 +82,38 @@ def svm(X, y):
     print('F1 Score: ', f1_score(y_test, predict, labels=labels, average='micro'))
     print('Precision Score: ', precision_score(y_test, predict, labels=labels, average='micro'))
     print('Accuracy Score: ', accuracy_score(y_test, predict))
+    plot_multiclass_roc(clf, X_test, y_test, 3)
+    print(classification_report(y_test, predict, digits=3))
+
+
+def plot_multiclass_roc(clf, X_test, y_test, n_classes, figsize=(17, 6)):
+    y_score = clf.decision_function(X_test)
+
+    # structures
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    # calculate dummies once
+    y_test_dummies = pd.get_dummies(y_test, drop_first=False).values
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test_dummies[:, i], y_score[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # roc for each class
+    plt.rcParams.update({'axes.titlesize': 'xx-large'})
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot([0, 1], [0, 1], 'k--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate', fontsize=20)
+    ax.set_ylabel('True Positive Rate', fontsize=20)
+    ax.set_title('Receiver operating characteristic example', fontsize=20)
+    for i in range(n_classes):
+        ax.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f) for label %i' % (roc_auc[i], i))
+    ax.legend(loc="best", fontsize=12)
+    ax.grid(alpha=.4)
+    plt.show()
 
 
 def main():

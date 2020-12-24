@@ -5,9 +5,14 @@ Date Created: 16/12/2020
 
 Function:
 This script:
+<<<<<<< Updated upstream
 1: Generates random dates to get tweets from
 2: Getst the tweets
 3: Stores into a MongoDB Database hosted online
+=======
+1: Gets preprocessed tweets from a text file(tweet_tokens.txt)
+2: Gets the TF-IDF scores for the tokens in the data
+3: Trains a SVC Classifier using the data
 
 Each function has a docsting about its function
 """
