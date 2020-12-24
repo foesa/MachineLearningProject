@@ -16,7 +16,8 @@ from tensorflow.keras.layers import Dense, Dropout, Reshape, Flatten, concatenat
     Embedding
 from tensorflow.keras.models import Model, Sequential
 import matplotlib.pyplot as plt
-
+from keras import backend as K
+from sklearn.model_selection import KFold
 
 def plot_history(history):
     acc = history.history['acc']
@@ -24,6 +25,7 @@ def plot_history(history):
     loss = history.history['loss']
     val_loss = history.history['val_loss']
     x = range(1, len(acc) + 1)
+    plt.rc('font', size=18)
     plt.clf()
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
@@ -138,6 +140,64 @@ def RNN(embeddings, max_sequence_length, num_words, embedding_dim, labels_index)
     model.summary()
     return model
 
+def recall_m(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
+
+def precision_m(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
+
+def f1_m(y_true, y_pred):
+    precision = precision_m(y_true, y_pred)
+    recall = recall_m(y_true, y_pred)
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+def cross_val_NN(k,X,y,train_embedding_weights,MAX_SEQUENCE_LENGTH,
+                 train_word_index,EMBEDDING_DIM,label_names,max_epoch,
+                 nnmodel):
+    """
+    Inputs: kfold number, data to evaluate X,y and setting for the model
+    
+    Outputs: The accuracy, precision, recall and standard deviation of the model
+    """
+
+    accuracy_list=[]
+    recall_list=[]
+    precision_list=[]
+    kf=KFold(n_splits=k)
+
+    for train, test in kf.split(X,y):
+        if nnmodel=='RNN':
+            model = RNN(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
+                         len(list(label_names)))
+        if nnmodel=='CNN':
+            model = ConvNet(train_embedding_weights, MAX_SEQUENCE_LENGTH, len(train_word_index) + 1, EMBEDDING_DIM,
+                         len(list(label_names)))        
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc',f1_m,precision_m, recall_m])
+
+        model.fit(X[train], y[train], epochs=max_epoch, batch_size=34, validation_data=(X[test], y[test]))
+        #predict=model.predict(X[test])
+        loss, accuracy, f1_score, precision, recall = model.evaluate(X[test], y[test], verbose=0)
+
+        accuracy_list.append(accuracy)
+        recall_list.append(recall)
+        precision_list.append(precision)
+        
+    accuracy_end=np.mean(accuracy_list)
+    std=np.std(accuracy_list)
+    recall=(np.mean(recall_list),np.std(recall_list))
+    precision=(np.mean(precision_list),np.std(precision_list))
+    
+    print('Accuracy: ', accuracy_end)
+    print('Standard Deviation', std)
+    print('Recall', recall)
+    print('Precision', precision)
+    
+    return accuracy_end, std ,recall, precision
 
 def main():
     dataset = get_dataset()
@@ -172,7 +232,15 @@ def main():
                 len(list(label_names)))
     history = model.fit(x_train, y_train, epochs=10, batch_size=64, validation_data=(x_test, y_test))
     plot_history(history)
+    '''
+    X=np.concatenate((x_train,x_test))
+    y=np.concatenate((y_train,y_test))    
 
+    cross_val_NN(5,X,y,train_embedding_weights,MAX_SEQUENCE_LENGTH,
+                 train_word_index,EMBEDDING_DIM,label_names,max_epoch=3,
+                 nnmodel='RNN') 
+                 #For CNN use nnmodel='CNN', max_epoch=2
+    '''
 
 if __name__ == '__main__':
     main()

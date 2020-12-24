@@ -12,15 +12,16 @@ Date Created: 14/12/2020
 Modules:
     o mongo_downloader - Downloads tweets to analyse
     o twitter_samp - Downloads general tweets to use as baseline
-    o lemmatize_sentence - 
+    o lemmatize_sentence -
     o remove_noise - Removes noise like links
     o get_tweets_for_model - changes strings to dictionaries
-    o pre_process1 - Preprocesses the tweets to analyse. 
+    o pre_process1 - Preprocesses the tweets to analyse.
         -Does this by removing tweets which mention both Candiates
         -Can change settings to include Both, or one candidate
     o pre_process2 - Preprocessing to allow a model to be trained
     o cross_val - Using K-fold cross validation to evaluate data
     o evaluation - Returns f scores, precision and recall
+    o evaluation2 - returns  precision and recall for cross validation
     o naive_bayes_model - Brings all modules together, trains model
 
 """
@@ -159,32 +160,34 @@ def pre_process_1(candidates):
     total_negative = []
     total_neutral = []
     for i in data:
-        start = i.find(text)
-        end = i.find(date)
-        # Making sure tweet doesn't include Both candiates
-        if "Biden" in candidates:
-            if "Biden lang:en" in i and "Trump" not in i:
-                if "'sentiment': 'Negative'" in i:
-                    total_negative.append(i[start + 7:end - 3])
-                if "'sentiment': 'Positive'" in i:
-                    total_positive.append(i[start + 7:end - 3])
-                if "'sentiment': 'Neutral'" in i:
-                    total_neutral.append(i[start + 7:end - 3])
-        if "Trump" in candidates:
-            if "Trump lang:en" in i and "Biden" not in i:
-                if "'sentiment': 'Negative'" in i:
-                    total_negative.append(i[start + 7:end - 3])
-                if "'sentiment': 'Positive'" in i:
-                    total_positive.append(i[start + 7:end - 3])
-                if "'sentiment': 'Neutral'" in i:
-                    total_neutral.append(i[start + 7:end - 3])
+        start=i.find(text)
+        end=i.find(date)
+        i=i.lower()
 
-    positive_tokens = []
-    negative_tokens = []
-    neutral_tokens = []
-    # Tokenizing tweets
+        #Making sure tweet doesn'tinclude Both candiates
+        if "Biden" in candidates:
+            if "biden lang:en" in i and "trump" not in i:
+                    if "'sentiment': 'negative'" in i:
+                        total_negative.append(i[start+7:end-3])
+                    if "'sentiment': 'positive'" in i:
+                        total_positive.append(i[start+7:end-3])
+                    if "'sentiment': 'neutral'" in i:
+                        total_neutral.append(i[start+7:end-3])
+        if "Trump" in candidates:
+            if "trump lang:en" in i and "biden" not in i:
+                    if "'sentiment': 'negative'" in i:
+                        total_negative.append(i[start+7:end-3])
+                    if "'sentiment': 'positive'" in i:
+                        total_positive.append(i[start+7:end-3])
+                    if "'sentiment': 'neutral'" in i:
+                        total_neutral.append(i[start+7:end-3])
+
+    positive_tokens=[]
+    negative_tokens=[]
+    neutral_tokens=[]
+    #Tokenizing tweets
     for i in total_positive:
-        positive_token = nltk.word_tokenize(i)
+        positive_token=nltk.word_tokenize(i)
         positive_tokens.append(positive_token)
     for i in total_negative:
         negative_token = nltk.word_tokenize(i)
@@ -232,46 +235,84 @@ def evaluation(test_data, classifier):
         print('neu F-score:', neu_fscore)
     except:
         pass
+def evaluation2(test_data,classifier):
+
+    refsets = collections.defaultdict(set)
+    testsets = collections.defaultdict(set)
+
+    for i, (feats, label) in enumerate(test_data):
+        refsets[label].add(i)
+        observed = classifier.classify(feats)
+        testsets[observed].add(i)
+
+    pos_precision=nltk.precision(refsets['Positive'], testsets['Positive'])
+    pos_recall=nltk.recall(refsets['Positive'], testsets['Positive'])
+
+    neg_precision=nltk.precision(refsets['Negative'], testsets['Negative'])
+    neg_recall=nltk.recall(refsets['Negative'], testsets['Negative'])
+    precision=(pos_precision+neg_precision)/2
+    recall=(pos_recall+neg_recall)/2
+    try: #Try loop added for neutrals
+        neu_precision=nltk.precision(refsets['Neutral'], testsets['Neutral'])
+        neu_recall=nltk.recall(refsets['Neutral'], testsets['Neutral'])
+        precision=(pos_precision+neg_precision+neu_precision)/3
+        recall=(pos_recall+neg_recall+neu_recall)/3
+    except:
+        pass
+    return precision,recall
 
 
-def cross_val(test_data, train_data):
-    dataset = test_data + train_data
+def cross_val(test_data,train_data):
+    dataset=test_data+train_data
     k_folds = 5
-    subset_size = int(len(dataset) / k_folds)
-    accuracy_list = []
+    subset_size = int(len(dataset)/k_folds)
+    accuracy_list=[]
+    precision_list=[]
+    recall_list=[]
     for i in range(k_folds):
         testing = dataset[i * subset_size:][:subset_size]
         training = dataset[:i * subset_size] + dataset[(i + 1) * subset_size:]
 
         classifier = NaiveBayesClassifier.train(training)
-        accuracy = classify.accuracy(classifier, testing)
-        accuracy_list.append(accuracy)
-    accuracy = np.round(np.mean(accuracy_list), 3)
-    std = np.round(np.std(accuracy_list), 3)
-    print('accuracy = ' + str(accuracy) + '+/-' + str(std))
+        accuracy=classify.accuracy(classifier, testing)
+        print(accuracy)
+        #nltk.classify.precision is broken currently
+        #Need to calculate pos, neg and neu and then manually calculate precision
+        precision,recall=evaluation2(testing, classifier)
+        precision_list.append(np.round(precision,3))
+        recall_list.append(np.round(recall,3))
 
+    accuracy=np.round(np.mean(accuracy_list),3)
+    std=np.round(np.std(accuracy_list),3)
+    precision=(np.round(np.mean(precision_list),3),
+               np.round(np.std(precision_list),3))
+    recall=(np.round(np.mean(recall_list),3),
+            np.round(np.std(recall_list),3))
 
-def naive_bayes_model(candidates, neutral):
-    pos, neg = twitter_samp()
-    print('########## - Baseline Model - ############')
-    neu = []
-    train_data, test_data2 = pre_process2(pos, neg, neu)
+    print('Accuracy = '+str(accuracy)+'+/-'+str(std))
+    print('Precision = '+str(precision))
+    print('Recall = '+str(recall))
+
+def naive_bayes_model(candidates,neutral):
+    pos, neg=twitter_samp()
+    print('########## - General Tweets - ############')
+    neu=[]
+    train_data,test_data2=pre_process2(pos,neg,neu)
     classifier = NaiveBayesClassifier.train(train_data)
 
-    pos, neg, neu = pre_process_1(candidates)
 
+    pos,neg,neu=pre_process_1(candidates)
     if neutral == 'no':
-        neu = []  # Use empty list to remove neutrals
-    train_data, test_data = pre_process2(pos, neg, neu)
-    evaluation(test_data2, classifier)
-    cross_val(train_data, test_data2)
+        neu=[] #Use empty list to remove neutrals
+    train_data,test_data=pre_process2(pos,neg,neu)
 
-    print('######### - Naive Bayes Model - ##############')
+    evaluation(test_data,classifier)
+    cross_val(train_data,test_data2)
+
+    print('######### - Dataset Tweets - ##############')
     classifier = NaiveBayesClassifier.train(train_data)
-    evaluation(test_data, classifier)
-    cross_val(train_data, test_data)
-
-
+    evaluation(test_data,classifier)
+    cross_val(train_data,test_data)
 def main():
     # mongo_downloader() #Uncomment to download
     candidates = 'Trump and Biden'  # 'Biden' or 'Trump' #Change candidates
